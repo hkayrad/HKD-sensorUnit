@@ -1,0 +1,27 @@
+{
+    "name": "HKD_IMU_Data_Processing",
+    "version": "0.0.1",
+    "description": "Data processing for IMU",
+    "keywords": "IMU, deneyap, HKD",
+    "repository":
+    {
+      "type": "git",
+      "url": "*"
+    },
+    "authors":
+    [
+      {
+        "name": "Hakan Kayra Doğan",
+        "email": "me@hkayrad.me",
+        "url": "https://hkayrad.me/contact",
+              "maintainer": true
+      }
+    ],
+    "license": "MPL",
+    "homepage": "*",
+    "dependencies": {
+        "deneyap": "Deneyap_6EksenAtaletselOlcumBirimi.h"
+    },
+    "frameworks": "*",
+    "platforms": "*"
+  }
