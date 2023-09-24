@@ -52,6 +52,7 @@ class IMU {
 
 	void startIMU();
 	void readData();
+	void plotValues();
 
 	private:
 	void calculateAngle();

@@ -62,6 +62,7 @@ void IMU::startIMU() {
 }
 
 void IMU::readData() {
+	time = millis();
 	float *allAxesFloatData = new float[7]; // All axes float values
 	imu.readAllAxesFloatData(allAxesFloatData);
 	for (int i = 0; i < 3;
@@ -91,44 +92,6 @@ void IMU::readData() {
 	Data.kalmanUncertainityAnglePR[1] = Data.kalman1DOutput[1];
 
 	/* ------------------------------- End filter ------------------------------- */
-
-	/* ------------------------- Low cost sensor fusion ------------------------ */
-
-	SFAccelPR[0] = atan2((Data.accelG[1] / 256), (Data.accelG[2] / 256) * 180 / PI);
-	SFGyroPR[0] = SFGyroPR[0] + (Data.gyroPRY[0] / 14.375) * dt;
-
-	SFCompPR[0] = SFGyroPR[0];
-	SFPredictedPR[0] = SFPredictedPR[0] + (Data.gyroPRY[0] / 14.375) * dt;
-
-	SFAccelPR[1] = atan2((Data.accelG[0] / 256), (Data.accelG[2] / 256) * 180 / PI);
-	SFGyroPR[1] = SFGyroPR[1] - (Data.gyroPRY[1] / 14.375) * dt;
-
-	SFCompPR[1] = SFGyroPR[1];
-	SFPredictedPR[1] = SFPredictedPR[1] + (Data.gyroPRY[1] / 14.375) * dt;
-
-	P00 += dt * (2 * P01 + dt * P11); // Projected error covariance terms from derivation result: Time Update step 2
-	P01 += dt * P11;									// Projected error covariance terms from derivation result: Time Update step 2
-	P00 += dt * Q;										// Projected error covariance terms from derivation result: Time Update step 2
-	P11 += dt * Q;										// Projected error covariance terms from derivation result: Time Update step 2
-	Kk0 = P00 / (P00 + R);						// Measurement Update step 1
-	Kk1 = P01 / (P01 + R);						// Measurement Update step 1
-
-	SFPredictedPR[0] += (SFAccelPR[0] - SFPredictedPR[0]) * Kk0; // Measurement Update step 2
-	SFPredictedPR[1] += (SFAccelPR[1] - SFPredictedPR[1]) * Kk0; // Measurement Update step 2
-
-	P00 *= (1 - Kk0); // Measurement Update step 3
-	P01 *= (1 - Kk1); // Measurement Update step 3
-	P11 -= Kk1 * P01; // Measurement Update step 3
-
-	float alpha = 0.98;
-	SFCompPR[0] = alpha * (SFCompPR[0] + SFCompPR[0] * dt) + (1.0 - alpha) * SFAccelPR[0]; // Complimentary filter
-	SFCompPR[1] = alpha * (SFCompPR[1] + SFCompPR[1] * dt) + (1.0 - alpha) * SFAccelPR[1]; // Complimentary filter
-
-	/* ---------------------------- End sensor fusion --------------------------- */
-
-	time = millis() - time;
-	time = (dt * 1000) - time;
-	delay(time);
 }
 
 void IMU::calculateAngle() {
@@ -148,4 +111,21 @@ void IMU::kalman1DFilter(float KalmanState, float KalmanUncertainity, float Kalm
 	KalmanUncertainity = (1 - KalmanGain) * KalmanUncertainity;
 	Data.kalman1DOutput[0] = KalmanState;
 	Data.kalman1DOutput[1] = KalmanUncertainity;
+}
+
+void IMU::plotValues() { // Plot values to the plotter
+	Serial.println(">Gyro Pitch [°/s]: " + String(Data.gyroPRY[0]));
+	Serial.println(">Gyro Roll [°/s]: " + String(Data.gyroPRY[1]));
+	Serial.println(">Gyro Yaw [°/s]: " + String(Data.gyroPRY[2]));
+	Serial.println(">Accel X [m/s^2]: " + String(Data.accelMps2[0]));
+	Serial.println(">Accel Y [m/s^2]: " + String(Data.accelMps2[1]));
+	Serial.println(">Accel Z [m/s^2]: " + String(Data.accelMps2[2]));
+	Serial.println(">Angle Pitch [°]: " + String(Data.anglePRY[0]));
+	Serial.println(">Angle Roll [°]: " + String(Data.anglePRY[1]));
+	Serial.println(">Angle Yaw [°]: " + String(Data.anglePRY[2]));
+	Serial.println(">Kalman Angle Pitch [°]: " +
+								 String(Data.kalmanAnglePR[0]));
+	Serial.println(">Kalman Angle Roll [°]: " +
+								 String(Data.kalmanAnglePR[1]));
+	delay(10);
 }
